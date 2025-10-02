@@ -44,6 +44,20 @@ Value pop() {
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++) // ip advance as soon of the byte is read. Allways the next byte to be used.
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()]) // the byte we read is the index
+// this macro feels illegal. Sick.
+
+// now, something important is that the order of the pop() is relevant.
+// When we declare a binary operation, and we compile it,
+// the left (operant) will be before the right in the stack... duh...
+// that means that we must first pop() the right to access the left in the stack... duh x2.
+// And in that way we can evaluate our expression the way we agreed (left to right).
+#define BINARY_OP(op) \
+    do { \
+        double b = pop(); \
+        double a = pop(); \
+        push(a op b); \
+    } while (false) // This 'do while' is trick to expand this block of code in almost everywhere, also allowing
+    // places with a ';' at the end
 
 
     for (;;) {
@@ -66,6 +80,11 @@ static InterpretResult run() {
                 printf("\n");
                 return INTERPRET_OK;
             }
+            case OP_ADD:      BINARY_OP(+); break;
+            case OP_SUBTRACT: BINARY_OP(-); break;
+            case OP_MULTIPLY: BINARY_OP(*); break;
+            case OP_DIVIDE:   BINARY_OP(/); break;
+            case OP_NEGATE: push(-pop()); break;
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
                 push(constant);
@@ -76,6 +95,7 @@ static InterpretResult run() {
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef BINARY_OP
 }
 
 InterpretResult interpret(Chunk *chunk) {
