@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "siew/debug.h"
+#include "siew/compiler.h"
 
 VM vm; // this is NOT a good idea. Thread safe left the room
 
@@ -84,6 +85,8 @@ static InterpretResult run() {
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
             case OP_DIVIDE:   BINARY_OP(/); break;
+                // we can do a micro optimization here, just by negating the value directly
+                // without poping and pushing the value, leaving the stack top alone
             case OP_NEGATE: push(-pop()); break;
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
@@ -98,13 +101,7 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(Chunk *chunk) {
-    vm.chunk = chunk;
-
-    // Instruction pointer to the next byte to execute.
-    // We keep it on the VM for easy access.
-    // Inside run() it can also be copied to a local variable so the compiler keeps it in a CPU register.
-    // This pointer changes constantly, so fewer memory trips = a slightly snappier interpreter
-    vm.ip = vm.chunk->code;
-    return run();
+InterpretResult interpret(const char* source) {
+    compile(source);
+    return INTERPRET_OK;
 }

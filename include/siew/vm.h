@@ -11,6 +11,10 @@
 // this is a stack base virtual machine
 typedef struct {
     Chunk *chunk;
+    // Instruction pointer to the next byte to execute.
+    // We keep it on the VM for easy access.
+    // Inside run() it can also be copied to a local variable so the compiler keeps it in a CPU register.
+    // This pointer changes constantly, so fewer memory trips = a slightly snappier interpreter
     // the reason why this is a pointer is that is faster to point in the middle of a list of bytes
     // the byte we want, that look up a list with an integer index.
     uint8_t* ip; // the name means Instruction Pointer.
@@ -26,7 +30,7 @@ typedef enum {
 
 void initVM();
 void freeVM();
-InterpretResult interpret(Chunk *chunk);
+InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
 

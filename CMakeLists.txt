@@ -6,9 +6,11 @@ set(CMAKE_C_STANDARD 11)
 add_library(siew STATIC
         src/core/chunk.c
         src/core/memory.c
-        src/vm/debug.c
         src/core/value.c
+        src/vm/debug.c
         src/vm/vm.c
+        src/compiler/compiler.c
+        src/compiler/scanner.c
 )
 
 target_include_directories(siew PUBLIC
