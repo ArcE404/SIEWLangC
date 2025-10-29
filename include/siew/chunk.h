@@ -21,7 +21,7 @@ typedef enum {
 typedef struct{
     int count;
     int capacity;
-    uint8_t* code; // this is a dynamic array in C, interesting...
+    uint8_t* code;
     int* lines; // TODO: THIS IS A WASTE OF MEMORY, FIND A BETTER SOLUTION
     ValueArray constants;
 } Chunk;

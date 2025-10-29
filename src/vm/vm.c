@@ -57,7 +57,7 @@ static InterpretResult run() {
         double b = pop(); \
         double a = pop(); \
         push(a op b); \
-    } while (false) // This 'do while' is trick to expand this block of code in almost everywhere, also allowing
+    } while (false) // This 'do while' is a trick to expand this block of code in almost everywhere, also allowing
     // places with a ';' at the end
 
 
@@ -102,6 +102,19 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(const char* source) {
-    compile(source);
-    return INTERPRET_OK;
+    Chunk chunk;
+    initChunk(&chunk);
+
+    if (!compile(source, &chunk)) {
+        freeChunk(&chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+
+    InterpretResult result = run();
+
+    freeChunk(&chunk);
+    return result;
 }
