@@ -5,6 +5,11 @@
 #ifndef SIEWLANGC_VALUE_H
 #define SIEWLANGC_VALUE_H
 #include "common.h"
+typedef enum {
+    VAL_BOOL,
+    VAL_NIL,
+    VAL_NUMBER
+} ValueType;
 
 typedef double Value;
 
