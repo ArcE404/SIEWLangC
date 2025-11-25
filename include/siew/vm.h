@@ -16,7 +16,7 @@ typedef struct {
     // Inside run() it can also be copied to a local variable so the compiler keeps it in a CPU register.
     // This pointer changes constantly, so fewer memory trips = a slightly snappier interpreter
     // the reason why this is a pointer is that is faster to point in the middle of a list of bytes
-    // the byte we want, that look up a list with an integer index.
+    // the byte we want, than look up a list with an integer index.
     uint8_t* ip; // the name means Instruction Pointer.
     Value stack[STACK_MAX];
     Value* stackTop; // we point at the position past the top, that way we can say that point -> index 0 = empty
