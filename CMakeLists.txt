@@ -11,6 +11,7 @@ add_library(siew STATIC
         src/vm/vm.c
         src/compiler/compiler.c
         src/compiler/scanner.c
+        src/core/object.c
 )
 
 target_include_directories(siew PUBLIC

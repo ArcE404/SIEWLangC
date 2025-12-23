@@ -21,6 +21,14 @@
 #define FREE_ARRAY(type, pointer, oldCount) \
     reallocate(pointer, sizeof(type) * (oldCount), 0)
 
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
+// instead of using free directly we use reallocate, this is to make the VM easier the job of tracking
+// how much memory is still being used.
+#define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)
+
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
+void freeObjects();
 
 #endif //SIEWLANGC_MEMORY_H

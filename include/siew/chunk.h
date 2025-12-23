@@ -19,8 +19,8 @@ typedef enum {
     // Relying on equivalences such as a <= b  being implemented as !(a > b) breaks IEEE 754 rules.
     // Under IEEE 754, any comparison involving a NaN operand returns false. This means:
     //
-    //   NaN <= b   → false
-    //   NaN > b    → false
+    //   NaN <= b   => false
+    //   NaN > b    => false
     //
     // If we implement <= as the negation of >, we incorrectly get:
     //

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "siew/object.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "siew/debug.h"
@@ -203,6 +204,13 @@ static void number() {
     emitConstant(NUMBER_VAL(value));
 }
 
+static void string() {
+    // we add 1 to start after the '"' and we subtract 2 to the length to not count the '"' as well
+
+    // if we want to add things like \n to the SIEW strings, we should handle those scenarios here.
+    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 static void grouping() {
     // Fun fact about grouping: it only matters to the front-end.
     // From the backend’s perspective, there’s no actual "grouping" expression to handle — only recursion.
@@ -219,7 +227,7 @@ static void unary() {
     // from an execution standpoint: at runtime, we first evaluate the expression
     // (leaving its value on the stack), then we pop that value, negate it, and push
     // the result back. The compiler arranges the emitted instructions to match
-    // this execution order — part of its job is to reorder operations so they align
+    // this execution order, part of its job is to reorder operations so they align
     // with how the VM will actually run them.
     TokenType operatorType = parser.previous.type;
 
@@ -255,7 +263,7 @@ ParseRule rules[] = {
   [TOKEN_LESS]          = {NULL,     binary,   PREC_COMPARISON},
   [TOKEN_LESS_EQUAL]    = {NULL,     binary,   PREC_COMPARISON},
   [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_STRING]        = {string,     NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
@@ -289,7 +297,7 @@ static void parsePrecedence(Precedence precedence) {
     prefixRule();
 
     while (precedence <= getRule(parser.current.type)->precedence) {
-        advance(); // we consume the next token as long it has higher presedence
+        advance(); // we consume the next token as long it has higher precedence
         ParseFn infixRule = getRule(parser.previous.type)->infix;
         infixRule();
     }

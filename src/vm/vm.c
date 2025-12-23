@@ -6,9 +6,12 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "siew/debug.h"
 #include "siew/compiler.h"
+#include "siew/memory.h"
+#include "siew/object.h"
 
 VM vm; // this is NOT a good idea. Thread safe left the room
 
@@ -31,9 +34,11 @@ static void runtimeError(const char* format, ...) {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM() {
+    freeObjects();
 }
 
 void push(Value value) {
@@ -62,6 +67,56 @@ static Value peek(int distance) {
 
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+static void concatenate() {
+    /* Memory management at its peak.
+     * Suppose we have:
+     *   a = "hello ";
+     *   b = "world";
+     *
+     * What we’re doing here is allocating a new chunk of memory large enough to
+     * hold both strings together (length(a) + length(b)).
+     *
+     * At first, that new memory block is empty. We copy the bytes of `a` into it:
+     *   hello _ _ _ _ _ _
+     *
+     * Then we move the pointer to the end of `a` (the space in this case) and start
+     * copying the bytes of `b`, producing:
+     *   hello world_
+     *
+     * The final byte we write is always the null terminator. Even though our
+     * ObjString tracks length explicitly and doesn’t technically need it, spending
+     * this single byte keeps our strings compatible with the C std library.
+     *
+     * Sick.
+     */
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
+
+    int length = a->length + b->length;
+
+    char* chars = ALLOCATE(char, length+ 1);
+
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+
+    chars[length] = '\0';
+
+    // We use takeString instead of copyString because this concatenation isn’t a
+    // string literal baked into the source code. This char array is something we
+    // built dynamically, and it already lives on the heap.
+    //
+    // That means the resulting SIEW string object can safely take ownership of
+    // this memory. If we used copyString here, not only would it be redundant, but
+    // this function would also become responsible for freeing the temporary buffer
+    // we just allocated. Totally unnecessary.
+    //
+    // Instead, we simply hand over the freshly concatenated buffer to the object.
+    // takeString claims ownership of the chars we pass to it.
+    // Very important detail to remember.
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
 }
 
 static InterpretResult run() {
@@ -107,7 +162,21 @@ static InterpretResult run() {
                 printf("\n");
                 return INTERPRET_OK;
             }
-            case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
+            case OP_ADD: {
+                // TODO: do that a number and a string can be concatenated
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    concatenate();
+                }else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    double b = AS_NUMBER(pop());
+                    double a = AS_NUMBER(pop());
+                    push(NUMBER_VAL(a + b));
+                }else {
+                    runtimeError(
+                        "Operands must be numbers or strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;

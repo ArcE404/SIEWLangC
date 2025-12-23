@@ -1,0 +1,1 @@
+"Hola" + " mundo" == "Hola mundo" // this is equal true

@@ -4,7 +4,10 @@
 
 #include "siew/value.h"
 #include <stdio.h>
+#include <string.h>
+
 #include "siew/memory.h"
+#include "siew/object.h"
 
 void initValueArray(ValueArray* array) {
     array->values = NULL;
@@ -32,12 +35,21 @@ bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
 
     // we cannot use the function memcmp() because of the union that we use in the value struct.
-    // C gives no guarantee that the unused memory of the union, and the padding between the union and other memory
+    // C gives no guarantee that the unused memory of the union and the padding between the union and other memory
     // are going to be the same between two Value structs
     switch (a.type) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL: return true;
         case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ: {
+            ObjString* aString  = AS_STRING(a);
+            ObjString* bString  = AS_STRING(b);
+
+            // since we need to walk to the strings this is considered slower in the interpreter
+            // meaning that our language is slower in string compilations
+            return aString->length == bString->length &&
+                memcmp(aString->chars, bString->chars, aString->length) == 0;
+        }
         default: return false; // Unreachable
     }
 }
@@ -49,5 +61,6 @@ void printValue(Value value) {
             break;
         case VAL_NIL: printf("nil"); break;
         case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_OBJ: printObject(value); break;
     }
 }
