@@ -12,6 +12,7 @@ add_library(siew STATIC
         src/compiler/compiler.c
         src/compiler/scanner.c
         src/core/object.c
+        src/core/table.c
 )
 
 target_include_directories(siew PUBLIC

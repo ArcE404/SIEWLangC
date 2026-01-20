@@ -5,6 +5,7 @@
 #ifndef SIEWLANGC_VM_H
 #define SIEWLANGC_VM_H
 #include "chunk.h"
+#include "table.h"
 
 #define STACK_MAX 256 // More than this and: "Nice stackoverflow. Nerd."
 
@@ -20,6 +21,7 @@ typedef struct {
     uint8_t* ip; // the name means Instruction Pointer.
     Value stack[STACK_MAX];
     Value* stackTop; // we point at the position past the top, that way we can say: point -> index 0 = empty
+    Table strings;
     Obj* objects; // the head of the list of objects allocated in the heap.
 } VM;
 
